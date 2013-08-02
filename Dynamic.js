@@ -1,12 +1,12 @@
 // This is a bit of a wreck right now. Don't look.
 window.Dyn = (function() {
-    
+	
 	var _models = [];
 	var _dynamicNodes = [];
 	
 	
 	/**
-     * Gets all elements with specified attribute
+	 * Gets all elements with specified attribute
 	 * Doesn't support 'for' attribute in ie7
 	 * @private
 	 * @param {String} node
@@ -31,7 +31,7 @@ window.Dyn = (function() {
 	};
 	
 	/**
-     * Add an event listener
+	 * Add an event listener
 	 *
 	 * @private
 	 * @param {HTMLElement} node The node to add the listener to
@@ -49,7 +49,7 @@ window.Dyn = (function() {
 	
 	
 	/**
-     * Delegated event listener for tags
+	 * Delegated event listener for tags
 	 *
 	 * @private
 	 * @param {HTMLElement} container Node to add the listener to
@@ -142,12 +142,12 @@ window.Dyn = (function() {
 			var node = _dynamicNodes[i];
 			var val;
 			var expr = node.getAttribute('data-show');
-            
-            var flattenedModels = _getFlattenedModels();
+			
+			var flattenedModels = _getFlattenedModels();
 			with (flattenedModels) {
-			    val = eval(expr); // it's either this or a large expression parsing library
+				val = eval(expr); // it's either this or a large expression parsing library
 			}
-            
+			
 			
 			//var tokens = _tokenize(node.getAttribute('data-show'));
 			//val = _evalTokens(tokens);
@@ -155,15 +155,15 @@ window.Dyn = (function() {
 			node.style.display = (val) ? '' : 'none';
 		}
 	};
-    
-    var _getFlattenedModels = function() {
-        var flattened = [];
-        for (var i in _models) {
-            flattened[i] = _models[i].value;
-        }
-        return flattened;
-    };
-    
+	
+	var _getFlattenedModels = function() {
+		var flattened = [];
+		for (var i in _models) {
+			flattened[i] = _models[i].value;
+		}
+		return flattened;
+	};
+	
 	
 	var _tokenize = function(expr) {
 		//var groupSplitRegex = /&&|\|\|)/;
