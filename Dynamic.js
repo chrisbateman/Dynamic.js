@@ -52,14 +52,17 @@ window.Dynamic = (function() {
 	 * Delegated event listener for tags
 	 *
 	 * @private
-	 * @param {HTMLElement} container Node to add the listener to
+	 * @Param {String} tag The type of element to listen for
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
-	 * @Param {String} tag The type of element to listen for
+	 * @param {HTMLElement} container Node to add the listener to
 	 * @return {Event} The added event
 	 */
-	var _addDelegateByTag = function(container, evt, callback, tag) {
+	var _addDelegateByTag = function(tag, evt, callback, container) {
+		container = container || document.body;
+		
 		// Change events don't bubble in ie8-
+		// Add listener to every tag instead (boo)
 		if (evt === 'change' && !container.addEventListener) {
 			var changeNodes = container.getElementsByTagName(tag);
 			for (var i=0; i<changeNodes.length; i++) {
@@ -97,7 +100,7 @@ window.Dynamic = (function() {
 	};
 	
 	var _initModel = function(node) {
-		if (node.nodeName === 'INPUT' || node.nodeName === 'TEXTAREA' || node.nodeName === 'SELECT') {
+		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT') {
 			var modelName = node.getAttribute('data-model');
 			
 			if (node.type === 'radio') {
@@ -151,10 +154,6 @@ window.Dynamic = (function() {
 				val = eval(expr); // it's either this or a large expression parsing library
 			}
 			
-			
-			//var tokens = _tokenize(node.getAttribute('data-show'));
-			//val = _evalTokens(tokens);
-			
 			node.style.display = (val) ? '' : 'none';
 		}
 	};
@@ -168,44 +167,6 @@ window.Dynamic = (function() {
 	};
 	
 	
-	var _tokenize = function(expr) {
-		//var groupSplitRegex = /&&|\|\|)/;
-		var splitRegex = /(==|!=|<|>|!)/;
-		
-		//var tokenGroups = expr.split(groupSplitRegex);
-		
-		var tokens = expr.split(splitRegex);
-		
-		for (var i=0, iLen=tokens.length; i<iLen; i++) {
-			var token = tokens[i];
-			if (token === '') {
-				tokens.splice(i, 1);
-			}
-		}
-		return tokens;
-	};
-	
-	var _evalTokens = function(tokens) {
-		switch(tokens.length) {
-			case 1:
-				return _models[tokens[0]].value;
-			case 2:
-				if (tokens[0] === '!') {
-					return !_models[tokens[1]].value;
-				}
-				break;
-			case 3:
-				tokens[2] = tokens[2].replace(/\'/g, '');
-				
-				if (tokens[1] === '==') {
-					return _models[tokens[0]].value === tokens[2];
-				} else if (tokens[2] === '!=') {
-					return _models[tokens[0]].value !== tokens[2];
-				}
-				break;
-		}
-	};
-	
 	
 	(function init() {
 		var modelList = _getElementsWithAttribute(document, 'data-model');
@@ -215,10 +176,10 @@ window.Dynamic = (function() {
 		
 		_dynamicNodes = _getElementsWithAttribute(document, 'data-show');
 		
-		_addDelegateByTag(document.body, 'click', _checkModel, 'input');
-		_addDelegateByTag(document.body, 'change', _checkModel, 'input');
-		_addDelegateByTag(document.body, 'keyup', _checkModel, 'input');
-		_addDelegateByTag(document.body, 'change', _checkModel, 'select');
+		_addDelegateByTag('input', 'click', _checkModel);
+		_addDelegateByTag('input', 'change', _checkModel);
+		_addDelegateByTag('input', 'keyup', _checkModel);
+		_addDelegateByTag('select', 'change', _checkModel);
 		
 		
 		_applyRules();
