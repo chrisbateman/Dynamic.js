@@ -1,5 +1,5 @@
 // This is a bit of a wreck right now. Don't look.
-window.Dyn = (function() {
+window.Dynamic = (function() {
 	
 	var _models = [];
 	var _dynamicNodes = [];
@@ -63,12 +63,12 @@ window.Dyn = (function() {
 		if (evt === 'change' && !container.addEventListener) {
 			var changeNodes = container.getElementsByTagName(tag);
 			for (var i=0; i<changeNodes.length; i++) {
-				this.addEvent(changeNodes[i], evt, callback);
+				_addEvent(changeNodes[i], evt, callback);
 			}
 			return true;
 		}
 		
-		return this.addEvent(container, evt, function(ev) {
+		return _addEvent(container, evt, function(ev) {
 			var target = ev.target || ev.srcElement;
 			if (target.nodeName === tag.toUpperCase()) {
 				callback.apply(target);
@@ -84,7 +84,7 @@ window.Dyn = (function() {
 	};
 	
 	var _getRadioValue = function(radioModel) {
-		for (var i=0, iLen=radioModel.length; i<iLen; i++) {
+		for (var i=0, iLen=radioModel.node.length; i<iLen; i++) {
 			var radio = radioModel.node[i];
 			if (radio.checked) {
 				return radio.value;
@@ -94,7 +94,7 @@ window.Dyn = (function() {
 	};
 	
 	var _initModel = function(node) {
-		if (node.modelName === 'INPUT' || node.nodeName === 'TEXTAREA' || node.nodeName === 'SELECT') {
+		if (node.nodeName === 'INPUT' || node.nodeName === 'TEXTAREA' || node.nodeName === 'SELECT') {
 			var modelName = node.getAttribute('data-model');
 			
 			if (node.type === 'radio') {
