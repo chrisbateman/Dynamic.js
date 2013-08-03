@@ -63,7 +63,10 @@ window.Dynamic = (function() {
 		if (evt === 'change' && !container.addEventListener) {
 			var changeNodes = container.getElementsByTagName(tag);
 			for (var i=0; i<changeNodes.length; i++) {
-				_addEvent(changeNodes[i], evt, callback);
+				_addEvent(changeNodes[i], evt, function(ev) {
+					var target = ev.target || ev.srcElement;
+					callback.apply(target);
+				});
 			}
 			return true;
 		}
@@ -213,7 +216,10 @@ window.Dynamic = (function() {
 		_dynamicNodes = _getElementsWithAttribute(document, 'data-show');
 		
 		_addDelegateByTag(document.body, 'click', _checkModel, 'input');
+		_addDelegateByTag(document.body, 'change', _checkModel, 'input');
+		_addDelegateByTag(document.body, 'keyup', _checkModel, 'input');
 		_addDelegateByTag(document.body, 'change', _checkModel, 'select');
+		
 		
 		_applyRules();
 	})();
