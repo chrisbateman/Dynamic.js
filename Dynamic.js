@@ -89,7 +89,7 @@ window.Dynamic = (function() {
 		return node.value;
 	};
 	
-	var _getRadioValue = function(radioModel) {
+	var _getRadioModelValue = function(radioModel) {
 		for (var i=0, iLen=radioModel.node.length; i<iLen; i++) {
 			var radio = radioModel.node[i];
 			if (radio.checked) {
@@ -112,7 +112,7 @@ window.Dynamic = (function() {
 						value: ''
 					};
 				}
-				_models[modelName].value = _getRadioValue(_models[modelName]);
+				_models[modelName].value = _getRadioModelValue(_models[modelName]);
 			} else {
 				_models[modelName] = {
 					node: node,
@@ -127,29 +127,35 @@ window.Dynamic = (function() {
 	
 	
 	var _checkModel = function() {
-		var model = this.getAttribute('data-model');
+		var modelName = this.getAttribute('data-model');
 		
-		if (model) {
-			if (_models[model]) {
+		if (modelName) {
+			if (_models[modelName]) {
+				var model = _models[modelName];
+				var oldValue = model.value;
+				
 				if (this.type === 'radio') {
-					_models[model].value = _getRadioValue(_models[model]);
+					model.value = _getRadioModelValue(model);
 				} else {
-					_models[model].value = _getNodeValue(this);
+					model.value = _getNodeValue(this);
+				}
+				
+				if (model.value !== oldValue) {
+					_applyRules();
 				}
 			} else {
 				// create model?
 			}
-			_applyRules();
 		}
 	};
 	
 	var _applyRules = function() {
+		var flattenedModels = _getFlattenedModels();
 		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
 			var node = _dynamicNodes[i];
 			var val;
 			var expr = node.getAttribute('data-show');
 			
-			var flattenedModels = _getFlattenedModels();
 			with (flattenedModels) {
 				val = eval(expr); // it's either this or a large expression parsing library
 			}
