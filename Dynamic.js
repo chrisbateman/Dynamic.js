@@ -82,6 +82,44 @@ window.Dynamic = (function() {
 		});
 	};
 	
+	var _onReady = function(callback) {
+		var ieTimeout;
+		
+		var ready = function(ev) {
+			callback();
+			cleanup(ev);
+		};
+		
+		var cleanup = function(ev) {
+			if (document.addEventListener) {
+				document.removeEventListener('DOMContentLoaded', ready, false);
+				window.removeEventListener('load', ready, false);
+			} else if (ev) { // don't run if it was the setTimeout
+				window.detachEvent('onreadystatechange', ready);
+				clearTimeout(ieTimeout);
+			}
+		};
+		
+		if (document.readyState === 'complete') {
+			callback();
+		} else if (document.addEventListener) {
+			document.addEventListener('DOMContentLoaded', ready, false);
+			window.addEventListener('load', ready, false); //failsafe
+		} else {
+			// works unless page is rendered progressively (it'll fire too soon)
+			// @see http://snook.ca/archives/javascript/settimeout_solve_domcontentloaded
+			ieTimeout = setTimeout(ready);
+			
+			document.attachEvent('onreadystatechange', function(ev) {
+				if (document.readyState === 'complete') { // can't trust 'interactive'
+					ready(ev);
+				}
+			});
+		}
+	};
+	
+	
+	
 	var _getNodeValue = function(node) {
 		if (node.type === 'checkbox' || node.type === 'radio') {
 			return node.checked;
@@ -111,6 +149,9 @@ window.Dynamic = (function() {
 						node: [node],
 						value: ''
 					};
+				}
+				if (!node.getAttribute('name')) {
+					node.setAttribute('name', modelName);
 				}
 				_models[modelName].value = _getRadioModelValue(_models[modelName]);
 			} else {
@@ -153,14 +194,14 @@ window.Dynamic = (function() {
 		var flattenedModels = _getFlattenedModels();
 		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
 			var node = _dynamicNodes[i];
-			var val;
+			var parsedExpressionValue;
 			var expr = node.getAttribute('data-show');
 			
 			with (flattenedModels) {
-				val = eval(expr); // it's either this or a large expression parsing library
+				parsedExpressionValue = eval(expr); // it's either this or a large expression parsing library
 			}
 			
-			node.style.display = (val) ? '' : 'none';
+			node.style.display = (parsedExpressionValue) ? '' : 'none';
 		}
 	};
 	
@@ -173,8 +214,7 @@ window.Dynamic = (function() {
 	};
 	
 	
-	
-	(function init() {
+	var _getDynNodes = function() {
 		var modelList = _getElementsWithAttribute(document, 'data-model');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
@@ -182,13 +222,19 @@ window.Dynamic = (function() {
 		
 		_dynamicNodes = _getElementsWithAttribute(document, 'data-show');
 		
-		_addDelegateByTag('input', 'click', _checkModel);
-		_addDelegateByTag('input', 'change', _checkModel);
-		_addDelegateByTag('input', 'keyup', _checkModel);
-		_addDelegateByTag('select', 'change', _checkModel);
-		
-		
 		_applyRules();
+	};
+	
+	
+	(function init() {
+		_onReady(function() {
+			_getDynNodes();
+			
+			_addDelegateByTag('input', 'click', _checkModel);
+			_addDelegateByTag('input', 'change', _checkModel);
+			_addDelegateByTag('input', 'keyup', _checkModel);
+			_addDelegateByTag('select', 'change', _checkModel);
+		});
 	})();
 	
 	
