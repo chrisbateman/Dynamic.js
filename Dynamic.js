@@ -82,6 +82,12 @@ window.Dynamic = (function() {
 		});
 	};
 	
+	/**
+	 * Fires callback when the DOM is ready.
+	 * Will run twice for ie8- under some circumstances
+	 *
+	 * @param {function} callback
+	 */
 	var _onReady = function(callback) {
 		var ieTimeout;
 		
@@ -193,7 +199,8 @@ window.Dynamic = (function() {
 	var _applyRules = function() {
 		var flattenedModels = _getFlattenedModels();
 		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
-			var node = _dynamicNodes[i];
+			var node = _dynamicNodes[i][0];
+			var childInputs = _dynamicNodes[i][1];
 			var parsedExpressionValue;
 			var expr = node.getAttribute('data-show');
 			
@@ -201,9 +208,20 @@ window.Dynamic = (function() {
 				parsedExpressionValue = eval(expr); // it's either this or a large expression parsing library
 			}
 			
+			// TODO class instead of display style
 			node.style.display = (parsedExpressionValue) ? '' : 'none';
+			
+			for (var k=0, kLen=childInputs.length; k<kLen; k++) {
+				var input = childInputs[k];
+				if (parsedExpressionValue) {
+					input.removeAttribute('disabled');
+				} else {
+					input.setAttribute('disabled', 'disabled');
+				}
+			}
 		}
 	};
+	
 	
 	var _getFlattenedModels = function() {
 		var flattened = [];
@@ -214,13 +232,34 @@ window.Dynamic = (function() {
 	};
 	
 	
-	var _getDynNodes = function() {
+	var _getSubmittableElements = function(node) {
+		var nodes = [];
+		
+		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT' || node.nodeName === 'TEXTAREA') {
+			nodes.push(node);
+		} else {
+			var inputs = Array.prototype.slice.call(node.getElementsByTagName('input'));
+			var selects = Array.prototype.slice.call(node.getElementsByTagName('select'));
+			var textareas = Array.prototype.slice.call(node.getElementsByTagName('textarea'));
+			
+			nodes = inputs.concat(selects).concat(textareas);
+		}
+		
+		return nodes;
+	};
+	
+	
+	var _collectDynNodes = function() {
 		var modelList = _getElementsWithAttribute(document, 'data-model');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
 		}
 		
-		_dynamicNodes = _getElementsWithAttribute(document, 'data-show');
+		var dynNodes = _getElementsWithAttribute(document, 'data-show');
+		for (var i=0, iLen=dynNodes.length; i<iLen; i++) {
+			var node = dynNodes[i];
+			_dynamicNodes.push([node, _getSubmittableElements(node)]);
+		}
 		
 		_applyRules();
 	};
@@ -228,7 +267,7 @@ window.Dynamic = (function() {
 	
 	(function init() {
 		_onReady(function() {
-			_getDynNodes();
+			_collectDynNodes();
 			
 			_addDelegateByTag('input', 'click', _checkModel);
 			_addDelegateByTag('input', 'change', _checkModel);
@@ -239,6 +278,7 @@ window.Dynamic = (function() {
 	
 	
 	return {
+		_dynamicNodes: _dynamicNodes,
 		_models: _models
 	};
 	
