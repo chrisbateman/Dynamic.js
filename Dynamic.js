@@ -82,6 +82,10 @@ window.Dynamic = (function() {
 		});
 	};
 	
+	var _isVisible = function(node) {
+		return node.offsetWidth > 0 && node.offsetHeight > 0;
+	};
+	
 	/**
 	 * Fires callback when the DOM is ready.
 	 * Will run twice for ie8- under some circumstances
@@ -198,6 +202,8 @@ window.Dynamic = (function() {
 	
 	var _applyRules = function() {
 		var flattenedModels = _getFlattenedModels();
+		var inputs = [];
+		
 		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
 			var node = _dynamicNodes[i][0];
 			var childInputs = _dynamicNodes[i][1];
@@ -212,12 +218,16 @@ window.Dynamic = (function() {
 			node.style.display = (parsedExpressionValue) ? '' : 'none';
 			
 			for (var k=0, kLen=childInputs.length; k<kLen; k++) {
-				var input = childInputs[k];
-				if (parsedExpressionValue) {
-					input.removeAttribute('disabled');
-				} else {
-					input.setAttribute('disabled', 'disabled');
-				}
+				inputs.push(childInputs[k]);
+			}
+		}
+		
+		for (var i=0, iLen=inputs.length; i<iLen; i++) {
+			var input = inputs[i];
+			if (_isVisible(input)) {
+				input.removeAttribute('disabled');
+			} else {
+				input.setAttribute('disabled', 'disabled');
 			}
 		}
 	};
@@ -234,13 +244,14 @@ window.Dynamic = (function() {
 	
 	var _getSubmittableElements = function(node) {
 		var nodes = [];
+		var protoSlice = Array.prototype.slice;
 		
 		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT' || node.nodeName === 'TEXTAREA') {
 			nodes.push(node);
 		} else {
-			var inputs = Array.prototype.slice.call(node.getElementsByTagName('input'));
-			var selects = Array.prototype.slice.call(node.getElementsByTagName('select'));
-			var textareas = Array.prototype.slice.call(node.getElementsByTagName('textarea'));
+			var inputs = protoSlice.call(node.getElementsByTagName('input'));
+			var selects = protoSlice.call(node.getElementsByTagName('select'));
+			var textareas = protoSlice.call(node.getElementsByTagName('textarea'));
 			
 			nodes = inputs.concat(selects).concat(textareas);
 		}
