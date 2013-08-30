@@ -5,30 +5,6 @@ window.Dynamic = (function() {
 	var _dynamicNodes = [];
 	
 	
-	/**
-	 * Gets all elements with specified attribute
-	 * Doesn't support 'for' attribute in ie7
-	 * @private
-	 * @param {String} node
-	 * @param {String} attr
-	 * @return {NodeList|Array} Matching nodes
-	 */
-	var _getElementsWithAttribute = function(node, attr) {
-		if (node.querySelectorAll) {
-			return node.querySelectorAll('[' + attr + ']');
-		} else {
-			var matchingNodes = [];
-			var allNodes = node.getElementsByTagName('*');
-			
-			for (var i=0, iLen=allNodes.length; i<iLen; i++) {
-				var thisNode = allNodes[i];
-				if (thisNode.getAttribute(attr)) {
-					matchingNodes.push(thisNode);
-				}
-			}
-			return matchingNodes;
-		}
-	};
 	
 	/**
 	 * Add an event listener
@@ -261,12 +237,12 @@ window.Dynamic = (function() {
 	
 	
 	var _collectDynNodes = function() {
-		var modelList = _getElementsWithAttribute(document, 'data-model');
+		var modelList = document.querySelectorAll('[data-model]');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
 		}
 		
-		var dynNodes = _getElementsWithAttribute(document, 'data-show');
+		var dynNodes = document.querySelectorAll('[data-show]');
 		for (var i=0, iLen=dynNodes.length; i<iLen; i++) {
 			var node = dynNodes[i];
 			_dynamicNodes.push([node, _getSubmittableElements(node)]);
