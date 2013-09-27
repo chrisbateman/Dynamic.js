@@ -86,49 +86,6 @@ window.Dynamic = (function() {
 		return node.offsetWidth > 0 && node.offsetHeight > 0;
 	};
 	
-	/**
-	 * Fires callback when the DOM is ready.
-	 * Will run twice for ie8- under some circumstances
-	 *
-	 * @param {function} callback
-	 */
-	var _onReady = function(callback) {
-		var ieTimeout;
-		
-		var ready = function(ev) {
-			callback();
-			cleanup(ev);
-		};
-		
-		var cleanup = function(ev) {
-			if (document.addEventListener) {
-				document.removeEventListener('DOMContentLoaded', ready, false);
-				window.removeEventListener('load', ready, false);
-			} else if (ev) { // don't run if it was the setTimeout
-				window.detachEvent('onreadystatechange', ready);
-				clearTimeout(ieTimeout);
-			}
-		};
-		
-		if (document.readyState === 'complete') {
-			callback();
-		} else if (document.addEventListener) {
-			document.addEventListener('DOMContentLoaded', ready, false);
-			window.addEventListener('load', ready, false); //failsafe
-		} else {
-			// works unless page is rendered progressively (it'll fire too soon)
-			// @see http://snook.ca/archives/javascript/settimeout_solve_domcontentloaded
-			ieTimeout = setTimeout(ready);
-			
-			document.attachEvent('onreadystatechange', function(ev) {
-				if (document.readyState === 'complete') { // can't trust 'interactive'
-					ready(ev);
-				}
-			});
-		}
-	};
-	
-	
 	
 	var _getNodeValue = function(node) {
 		if (node.type === 'checkbox' || node.type === 'radio') {
@@ -260,7 +217,7 @@ window.Dynamic = (function() {
 	};
 	
 	
-	var _collectDynNodes = function() {
+	var _init = function() {
 		var modelList = _getElementsWithAttribute(document, 'data-model');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
@@ -276,21 +233,21 @@ window.Dynamic = (function() {
 	};
 	
 	
-	(function init() {
-		_onReady(function() {
-			_collectDynNodes();
-			
-			_addDelegateByTag('input', 'click', _checkModel);
-			_addDelegateByTag('input', 'change', _checkModel);
-			_addDelegateByTag('input', 'keyup', _checkModel);
-			_addDelegateByTag('select', 'change', _checkModel);
-		});
+	
+	(function initialize() {
+		_init();
+		
+		_addDelegateByTag('input', 'click', _checkModel);
+		_addDelegateByTag('input', 'change', _checkModel);
+		_addDelegateByTag('input', 'keyup', _checkModel);
+		_addDelegateByTag('select', 'change', _checkModel);
 	})();
 	
 	
 	return {
 		_dynamicNodes: _dynamicNodes,
-		_models: _models
+		_models: _models,
+		init: _init
 	};
 	
 })();
