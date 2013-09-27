@@ -3,6 +3,7 @@ window.Dynamic = (function() {
 	
 	var _models = [];
 	var _dynamicNodes = [];
+	var _hideClass = 'dynamic-hide';
 	
 	
 	/**
@@ -171,8 +172,12 @@ window.Dynamic = (function() {
 				parsedExpressionValue = eval(expr); // it's either this or a large expression parsing library
 			}
 			
-			// TODO class instead of display style
-			node.style.display = (parsedExpressionValue) ? '' : 'none';
+			//node.style.display = (parsedExpressionValue) ? '' : 'none';
+			if (parsedExpressionValue) {
+				node.classList.remove(_hideClass);
+			} else {
+				node.classList.add(_hideClass);
+			}
 			
 			for (var k=0, kLen=childInputs.length; k<kLen; k++) {
 				inputs.push(childInputs[k]);
@@ -241,6 +246,8 @@ window.Dynamic = (function() {
 		_addDelegateByTag('input', 'change', _checkModel);
 		_addDelegateByTag('input', 'keyup', _checkModel);
 		_addDelegateByTag('select', 'change', _checkModel);
+		
+		document.write('<style type="text/css">.'+_hideClass+'{display:none!important;}</style>');
 	})();
 	
 	
