@@ -38,13 +38,12 @@ window.Dynamic = (function() {
 	 * @param {HTMLElement} node The node to add the listener to
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
-	 * @return {Event} The event
 	 */
 	var _addEvent = function(node, evt, callback) {
 		if (node.addEventListener) {
-			return node.addEventListener(evt, callback, false);
+			node.addEventListener(evt, callback, false);
 		} else if (node.attachEvent)  {
-			return node.attachEvent('on' + evt, callback);
+			node.attachEvent('on' + evt, callback);
 		}
 	};
 	
@@ -57,7 +56,6 @@ window.Dynamic = (function() {
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
 	 * @param {HTMLElement} container Node to add the listener to
-	 * @return {Event} The added event
 	 */
 	var _addDelegateByTag = function(tag, evt, callback, container) {
 		container = container || document.body;
@@ -72,10 +70,10 @@ window.Dynamic = (function() {
 					callback.apply(target);
 				});
 			}
-			return true;
+			return;
 		}
 		
-		return _addEvent(container, evt, function(ev) {
+		_addEvent(container, evt, function(ev) {
 			var target = ev.target || ev.srcElement;
 			if (target.nodeName === tag.toUpperCase()) {
 				callback.apply(target);
