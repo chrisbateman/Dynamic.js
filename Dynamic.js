@@ -3,6 +3,7 @@ window.Dynamic = (function() {
 	
 	var _models = [];
 	var _dynamicNodes = [];
+	var _submittableElements = [];
 	var _hideClass = 'dynamic-hide';
 	
 	
@@ -126,7 +127,6 @@ window.Dynamic = (function() {
 					value: _getNodeValue(node)
 				};
 			}
-			
 		} else {
 			// garbage
 		}
@@ -161,8 +161,7 @@ window.Dynamic = (function() {
 		var inputs = [];
 		
 		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
-			var node = _dynamicNodes[i][0];
-			var childInputs = _dynamicNodes[i][1];
+			var node = _dynamicNodes[i];
 			var parsedExpressionValue;
 			var expr = node.getAttribute('data-show');
 			
@@ -177,20 +176,21 @@ window.Dynamic = (function() {
 				node.classList.add(_hideClass);
 			}
 			
-			for (var k=0, kLen=childInputs.length; k<kLen; k++) {
-				inputs.push(childInputs[k]);
-			}
 		}
 		
-		for (var i=0, iLen=inputs.length; i<iLen; i++) {
-			var input = inputs[i];
+		_checkSubmittableElements();
+	};
+	
+	var _checkSubmittableElements = function() {
+		for (var i=0, iLen=_submittableElements.length; i<iLen; i++) {
+			var input = _submittableElements[i];
 			if (_isVisible(input)) {
 				input.removeAttribute('disabled');
 			} else {
 				input.setAttribute('disabled', 'disabled');
 			}
 		}
-	};
+	}
 	
 	
 	var _getFlattenedModels = function() {
@@ -203,20 +203,17 @@ window.Dynamic = (function() {
 	
 	
 	var _getSubmittableElements = function(node) {
-		var nodes = [];
 		var protoSlice = Array.prototype.slice;
 		
 		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT' || node.nodeName === 'TEXTAREA') {
-			nodes.push(node);
+			_submittableElements.push(node);
 		} else {
 			var inputs = protoSlice.call(node.getElementsByTagName('input'));
 			var selects = protoSlice.call(node.getElementsByTagName('select'));
 			var textareas = protoSlice.call(node.getElementsByTagName('textarea'));
 			
-			nodes = inputs.concat(selects).concat(textareas);
+			_submittableElements = _submittableElements.concat(inputs).concat(selects).concat(textareas);
 		}
-		
-		return nodes;
 	};
 	
 	
@@ -226,10 +223,12 @@ window.Dynamic = (function() {
 			_initModel(modelList[i]);
 		}
 		
+		_dynamicNodes = [];
 		var dynNodes = _getElementsWithAttribute(document, 'data-show');
 		for (var i=0, iLen=dynNodes.length; i<iLen; i++) {
 			var node = dynNodes[i];
-			_dynamicNodes.push([node, _getSubmittableElements(node)]);
+			_dynamicNodes.push(node);
+			_getSubmittableElements(node);
 		}
 		
 		_applyRules();
@@ -238,21 +237,21 @@ window.Dynamic = (function() {
 	
 	
 	(function initialize() {
+		document.write('<style type="text/css">.'+_hideClass+'{display:none!important;}</style>');
+		
 		_init();
 		
 		_addDelegateByTag('input', 'click', _checkModel);
 		_addDelegateByTag('input', 'change', _checkModel);
 		_addDelegateByTag('input', 'keyup', _checkModel);
 		_addDelegateByTag('select', 'change', _checkModel);
-		
-		document.write('<style type="text/css">.'+_hideClass+'{display:none!important;}</style>');
 	})();
 	
 	
 	return {
 		_dynamicNodes: _dynamicNodes,
 		_models: _models,
-		init: _init
+		reinit: _init
 	};
 	
 })();
