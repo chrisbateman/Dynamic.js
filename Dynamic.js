@@ -8,6 +8,62 @@ window.Dynamic = (function() {
 	
 	
 	/**
+	* Determines whether a DOM element has the given className
+	* @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	* @param {Element} el The DOM element. 
+	* @param {String} className The class name to search for
+	* @return {Boolean} Whether or not the element has the given class. 
+	*/
+	var _hasClass = function(el, className) {
+		var re = new RegExp('(?:^|\\s+)' + className + '(?:\\s+|$)');
+		return re.test(el.className);
+	};
+	
+	/**
+	 * Adds a class name to a given DOM element
+	 * @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	 * @param {Element} el
+	 * @param {String} className The class name to add to the class attribute
+	 */
+	var _addClass = function(el, className) {
+		if (!_hasClass(el, className)) { // skip if already present 
+			el.className = _trim([el.className, className].join(' '));
+		}
+	};
+	
+	/**
+	 * Removes a class name from a given element
+	 * @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	 * @param {Element} el The DOM element. 
+	 * @param {String} className The class name to remove from the class attribute
+	 */
+	var _removeClass = function(el, className) {
+		if (className && _hasClass(el, className)) {
+			el.className = _trim(el.className.replace(new RegExp('(?:^|\\s+)' + className + '(?:\\s+|$)'), ' '));
+			
+			if (_hasClass(el, className) ) { // in case of multiple adjacent
+				this.removeClass(el, className);
+			}
+		}
+	};
+	
+	
+	/**
+	 * Fallback for String.trim()
+	 * IE 8-
+	 * @param {String} str
+	 * @return {String} Trimmed string
+	 */
+	var _trim = function(str) {
+		if (str.trim) {
+			return str.trim();
+		} else {
+			return str.replace(/^\s+|\s+$/g,'');
+		}
+	};
+	
+	
+	/**
 	 * Gets all elements with specified attribute
 	 * Doesn't support 'for' attribute in ie7
 	 * @private
@@ -199,9 +255,9 @@ window.Dynamic = (function() {
 			}
 			
 			if (parsedExpressionValue) {
-				el.classList.remove(_hideClass);
+				_removeClass(el, _hideClass);
 			} else {
-				el.classList.add(_hideClass);
+				_addClass(el, _hideClass);
 			}
 		}
 		
