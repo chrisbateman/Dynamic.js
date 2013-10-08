@@ -112,7 +112,7 @@ window.Dynamic = (function() {
 	 * @Param {String} tag The type of element to listen for
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
-	 * @param {Element} container Element to add the listener to
+	 * @param {Element} [container] Element to add the listener to
 	 */
 	var _addDelegateByTag = function(tag, evt, callback, container) {
 		container = container || document.body;
@@ -183,7 +183,7 @@ window.Dynamic = (function() {
 	 * @param  {Element} el
 	 */
 	var _initModel = function(el) {
-		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT') {
+		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName == 'TEXTAREA') {
 			var modelName = el.getAttribute('data-model');
 			
 			if (el.type === 'radio') {
@@ -343,6 +343,8 @@ window.Dynamic = (function() {
 		_addDelegateByTag('input', 'click', _checkModel);
 		_addDelegateByTag('input', 'change', _checkModel);
 		_addDelegateByTag('input', 'keyup', _checkModel);
+		_addDelegateByTag('textarea', 'change', _checkModel);
+		_addDelegateByTag('textarea', 'keyup', _checkModel);
 		_addDelegateByTag('select', 'change', _checkModel);
 	})();
 	
