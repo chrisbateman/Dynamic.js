@@ -184,7 +184,7 @@ window.Dynamic = (function() {
 	 */
 	var _initModel = function(el) {
 		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName == 'TEXTAREA') {
-			var modelName = el.getAttribute('data-model');
+			var modelName = el.getAttribute('data-model') || el.getAttribute('name');
 			
 			if (el.type === 'radio') {
 				if (_models[modelName]) {
@@ -216,7 +216,7 @@ window.Dynamic = (function() {
 	 * @this {Element} The input in question
 	 */
 	var _checkModel = function() {
-		var modelName = this.getAttribute('data-model');
+		var modelName = this.getAttribute('data-model') || this.getAttribute('name');
 		
 		if (modelName) {
 			if (_models[modelName]) {
