@@ -80,7 +80,7 @@ window.Dynamic = (function() {
 			
 			for (var i=0, iLen=allNodes.length; i<iLen; i++) {
 				var thisNode = allNodes[i];
-				if (thisNode.getAttribute(attr)) {
+				if (thisNode.getAttribute(attr) !== null) {
 					matchingNodes.push(thisNode);
 				}
 			}
@@ -183,7 +183,7 @@ window.Dynamic = (function() {
 	 * @param  {Element} el
 	 */
 	var _initModel = function(el) {
-		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName == 'TEXTAREA') {
+		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') {
 			var modelName = el.getAttribute('data-model') || el.getAttribute('name');
 			
 			if (el.type === 'radio') {
