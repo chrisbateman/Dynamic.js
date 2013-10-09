@@ -298,17 +298,25 @@ window.Dynamic = (function() {
 	 * @param  {Element} el The root element. If this is a submittable element, it will be added
 	 */
 	var _getSubmittableElements = function(el) {
-		var protoSlice = Array.prototype.slice;
-		
 		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') {
 			_submittableElements.push(el);
 		} else {
-			var inputs = protoSlice.call(el.getElementsByTagName('input'));
-			var selects = protoSlice.call(el.getElementsByTagName('select'));
-			var textareas = protoSlice.call(el.getElementsByTagName('textarea'));
+			
+			var inputs = _nodelistToArray(el.getElementsByTagName('input'));
+			var selects = _nodelistToArray(el.getElementsByTagName('select'));
+			var textareas = _nodelistToArray(el.getElementsByTagName('textarea'));
 			
 			_submittableElements = _submittableElements.concat(inputs).concat(selects).concat(textareas);
 		}
+	};
+	
+	
+	var _nodelistToArray = function (nodeList) {
+		var arr = [];
+		for (var i=0, iLen=nodeList.length; i<iLen; i++) {
+			arr.push(nodeList[i]);
+		}
+		return arr;
 	};
 	
 	
@@ -352,7 +360,8 @@ window.Dynamic = (function() {
 	return {
 		_dynamicElements: _dynamicElements,
 		_models: _models,
-		reinit: _init
+		_submittable: _submittableElements,
+		init: _init
 	};
 	
 })();
