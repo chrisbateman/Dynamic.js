@@ -2,24 +2,80 @@
 window.Dynamic = (function() {
 	
 	var _models = [];
-	var _dynamicNodes = [];
+	var _dynamicElements = [];
+	var _submittableElements = [];
+	var _hideClass = 'dynamic-hide';
 	
+	
+	/**
+	* Determines whether a DOM element has the given className
+	* @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	* @param {Element} el The DOM element. 
+	* @param {String} className The class name to search for
+	* @return {Boolean} Whether or not the element has the given class. 
+	*/
+	var _hasClass = function(el, className) {
+		var re = new RegExp('(?:^|\\s+)' + className + '(?:\\s+|$)');
+		return re.test(el.className);
+	};
+	
+	/**
+	 * Adds a class name to a given DOM element
+	 * @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	 * @param {Element} el
+	 * @param {String} className The class name to add to the class attribute
+	 */
+	var _addClass = function(el, className) {
+		if (!_hasClass(el, className)) { // skip if already present 
+			el.className = _trim([el.className, className].join(' '));
+		}
+	};
+	
+	/**
+	 * Removes a class name from a given element
+	 * @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
+	 * @param {Element} el The DOM element. 
+	 * @param {String} className The class name to remove from the class attribute
+	 */
+	var _removeClass = function(el, className) {
+		if (className && _hasClass(el, className)) {
+			el.className = _trim(el.className.replace(new RegExp('(?:^|\\s+)' + className + '(?:\\s+|$)'), ' '));
+			
+			if (_hasClass(el, className) ) { // in case of multiple adjacent
+				this.removeClass(el, className);
+			}
+		}
+	};
+	
+	
+	/**
+	 * Fallback for String.trim()
+	 * IE 8-
+	 * @param {String} str
+	 * @return {String} Trimmed string
+	 */
+	var _trim = function(str) {
+		if (str.trim) {
+			return str.trim();
+		} else {
+			return str.replace(/^\s+|\s+$/g,'');
+		}
+	};
 	
 	
 	/**
 	 * Add an event listener
 	 *
 	 * @private
-	 * @param {HTMLElement} node The node to add the listener to
+	 * @param {Element} el The element to add the listener to
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
-	 * @return {Event} The event
 	 */
-	var _addEvent = function(node, evt, callback) {
-		if (node.addEventListener) {
-			return node.addEventListener(evt, callback, false);
-		} else if (node.attachEvent)  {
-			return node.attachEvent('on' + evt, callback);
+	var _addEvent = function(el, evt, callback) {
+		if (el.addEventListener) {
+			el.addEventListener(evt, callback, false);
+		} else if (el.attachEvent)  {
+			el.attachEvent('on' + evt, callback);
 		}
 	};
 	
@@ -31,8 +87,7 @@ window.Dynamic = (function() {
 	 * @Param {String} tag The type of element to listen for
 	 * @param {String} evt Name of the event to listen for
 	 * @param {Function} callback
-	 * @param {HTMLElement} container Node to add the listener to
-	 * @return {Event} The added event
+	 * @param {Element} [container] Element to add the listener to
 	 */
 	var _addDelegateByTag = function(tag, evt, callback, container) {
 		container = container || document.body;
@@ -47,10 +102,10 @@ window.Dynamic = (function() {
 					callback.apply(target);
 				});
 			}
-			return true;
+			return;
 		}
 		
-		return _addEvent(container, evt, function(ev) {
+		_addEvent(container, evt, function(ev) {
 			var target = ev.target || ev.srcElement;
 			if (target.nodeName === tag.toUpperCase()) {
 				callback.apply(target);
@@ -58,64 +113,38 @@ window.Dynamic = (function() {
 		});
 	};
 	
-	var _isVisible = function(node) {
-		return node.offsetWidth > 0 && node.offsetHeight > 0;
-	};
 	
 	/**
-	 * Fires callback when the DOM is ready.
-	 * Will run twice for ie8- under some circumstances
-	 *
-	 * @param {function} callback
+	 * Determines whether an element is currently visible
+	 * @param  {Element} el
+	 * @return {Boolean}
 	 */
-	var _onReady = function(callback) {
-		var ieTimeout;
-		
-		var ready = function(ev) {
-			callback();
-			cleanup(ev);
-		};
-		
-		var cleanup = function(ev) {
-			if (document.addEventListener) {
-				document.removeEventListener('DOMContentLoaded', ready, false);
-				window.removeEventListener('load', ready, false);
-			} else if (ev) { // don't run if it was the setTimeout
-				window.detachEvent('onreadystatechange', ready);
-				clearTimeout(ieTimeout);
-			}
-		};
-		
-		if (document.readyState === 'complete') {
-			callback();
-		} else if (document.addEventListener) {
-			document.addEventListener('DOMContentLoaded', ready, false);
-			window.addEventListener('load', ready, false); //failsafe
-		} else {
-			// works unless page is rendered progressively (it'll fire too soon)
-			// @see http://snook.ca/archives/javascript/settimeout_solve_domcontentloaded
-			ieTimeout = setTimeout(ready);
-			
-			document.attachEvent('onreadystatechange', function(ev) {
-				if (document.readyState === 'complete') { // can't trust 'interactive'
-					ready(ev);
-				}
-			});
-		}
+	var _isVisible = function(el) {
+		return el.offsetWidth > 0 && el.offsetHeight > 0;
 	};
 	
 	
-	
-	var _getNodeValue = function(node) {
-		if (node.type === 'checkbox' || node.type === 'radio') {
-			return node.checked;
+	/**
+	 * Return's an input's current value
+	 * @param  {Element} el
+	 * @return {Boolean|String}
+	 */
+	var _getInputValue = function(el) {
+		if (el.type === 'checkbox' || el.type === 'radio') {
+			return el.checked;
 		}
-		return node.value;
+		return el.value;
 	};
 	
+	
+	/**
+	 * Returns the current value for a set of radios
+	 * @param  {Object} radioModel
+	 * @return {String}
+	 */
 	var _getRadioModelValue = function(radioModel) {
-		for (var i=0, iLen=radioModel.node.length; i<iLen; i++) {
-			var radio = radioModel.node[i];
+		for (var i=0, iLen=radioModel.element.length; i<iLen; i++) {
+			var radio = radioModel.element[i];
 			if (radio.checked) {
 				return radio.value;
 			}
@@ -123,38 +152,46 @@ window.Dynamic = (function() {
 		return '';
 	};
 	
-	var _initModel = function(node) {
-		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT') {
-			var modelName = node.getAttribute('data-model');
+	
+	/**
+	 * Creates a model for the given input and adds it to _models
+	 * @param  {Element} el
+	 */
+	var _initModel = function(el) {
+		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') {
+			var modelName = el.getAttribute('data-model') || el.getAttribute('name');
 			
-			if (node.type === 'radio') {
+			if (el.type === 'radio') {
 				if (_models[modelName]) {
-					_models[modelName].node.push(node);
+					_models[modelName].element.push(el);
 				} else {
 					_models[modelName] = {
-						node: [node],
+						element: [el],
 						value: ''
 					};
 				}
-				if (!node.getAttribute('name')) {
-					node.setAttribute('name', modelName);
+				if (!el.getAttribute('name')) {
+					el.setAttribute('name', modelName);
 				}
 				_models[modelName].value = _getRadioModelValue(_models[modelName]);
 			} else {
 				_models[modelName] = {
-					node: node,
-					value: _getNodeValue(node)
+					element: el,
+					value: _getInputValue(el)
 				};
 			}
-			
 		} else {
 			// garbage
 		}
 	};
 	
 	
+	/**
+	 * Checks whether an input has changed - if so, run the rules
+	 * @this {Element} The input in question
+	 */
 	var _checkModel = function() {
-		var modelName = this.getAttribute('data-model');
+		var modelName = this.getAttribute('data-model') || this.getAttribute('name');
 		
 		if (modelName) {
 			if (_models[modelName]) {
@@ -164,7 +201,7 @@ window.Dynamic = (function() {
 				if (this.type === 'radio') {
 					model.value = _getRadioModelValue(model);
 				} else {
-					model.value = _getNodeValue(this);
+					model.value = _getInputValue(this);
 				}
 				
 				if (model.value !== oldValue) {
@@ -176,30 +213,39 @@ window.Dynamic = (function() {
 		}
 	};
 	
+	
+	/**
+	 * Loops through each dynamic element and evaluates its rules against the current models and hides/shows
+	 */
 	var _applyRules = function() {
 		var flattenedModels = _getFlattenedModels();
-		var inputs = [];
 		
-		for (var i=0, iLen=_dynamicNodes.length; i<iLen; i++) {
-			var node = _dynamicNodes[i][0];
-			var childInputs = _dynamicNodes[i][1];
+		for (var i=0, iLen=_dynamicElements.length; i<iLen; i++) {
+			var el = _dynamicElements[i];
+			var expr = el.getAttribute('data-show');
 			var parsedExpressionValue;
-			var expr = node.getAttribute('data-show');
 			
 			with (flattenedModels) {
 				parsedExpressionValue = eval(expr); // it's either this or a large expression parsing library
 			}
 			
-			// TODO class instead of display style
-			node.style.display = (parsedExpressionValue) ? '' : 'none';
-			
-			for (var k=0, kLen=childInputs.length; k<kLen; k++) {
-				inputs.push(childInputs[k]);
+			if (parsedExpressionValue) {
+				_removeClass(el, _hideClass);
+			} else {
+				_addClass(el, _hideClass);
 			}
 		}
 		
-		for (var i=0, iLen=inputs.length; i<iLen; i++) {
-			var input = inputs[i];
+		_setSubmittableElements();
+	};
+	
+	
+	/**
+	 * Loops through submittable elements and disables/enables based on visibility
+	 */
+	var _setSubmittableElements = function() {
+		for (var i=0, iLen=_submittableElements.length; i<iLen; i++) {
+			var input = _submittableElements[i];
 			if (_isVisible(input)) {
 				input.removeAttribute('disabled');
 			} else {
@@ -209,6 +255,10 @@ window.Dynamic = (function() {
 	};
 	
 	
+	/**
+	 * Returns a flattened array of models (basically replaces each model with the model's value)
+	 * @return {Array}
+	 */
 	var _getFlattenedModels = function() {
 		var flattened = [];
 		for (var i in _models) {
@@ -218,55 +268,66 @@ window.Dynamic = (function() {
 	};
 	
 	
-	var _getSubmittableElements = function(node) {
-		var nodes = [];
-		var protoSlice = Array.prototype.slice;
-		
-		if (node.nodeName === 'INPUT' || node.nodeName === 'SELECT' || node.nodeName === 'TEXTAREA') {
-			nodes.push(node);
+	/**
+	 * Retrives all inputs that might be submitted as part of a form, and adds to _submittableElements
+	 * @param  {Element} el The root element. If this is a submittable element, it will be added
+	 */
+	var _getSubmittableElements = function(el) {
+		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') {
+			_submittableElements.push(el);
 		} else {
-			var inputs = protoSlice.call(node.getElementsByTagName('input'));
-			var selects = protoSlice.call(node.getElementsByTagName('select'));
-			var textareas = protoSlice.call(node.getElementsByTagName('textarea'));
-			
-			nodes = inputs.concat(selects).concat(textareas);
+			var childInputs = el.querySelectorAll('input, select, textarea');
+			// .concat() doesn't work for NodeLists :(
+			for (var i=0, iLen=childInputs.length; i<iLen; i++) {
+				_submittableElements.push(childInputs[i]);
+			}
 		}
-		
-		return nodes;
 	};
 	
 	
-	var _collectDynNodes = function() {
+	/**
+	 * Retrives and initializes all models and dynamic elements.
+	 * @public
+	 */
+	var _init = function() {
 		var modelList = document.querySelectorAll('[data-model]');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
 		}
 		
-		var dynNodes = document.querySelectorAll('[data-show]');
-		for (var i=0, iLen=dynNodes.length; i<iLen; i++) {
-			var node = dynNodes[i];
-			_dynamicNodes.push([node, _getSubmittableElements(node)]);
+		_dynamicElements = [];
+		_submittableElements = [];
+		var dynEls = document.querySelectorAll('[data-show]');
+		for (var i=0, iLen=dynEls.length; i<iLen; i++) {
+			var el = dynEls[i];
+			_dynamicElements.push(el);
+			_getSubmittableElements(el);
 		}
 		
 		_applyRules();
 	};
 	
 	
-	(function init() {
-		_onReady(function() {
-			_collectDynNodes();
-			
-			_addDelegateByTag('input', 'click', _checkModel);
-			_addDelegateByTag('input', 'change', _checkModel);
-			_addDelegateByTag('input', 'keyup', _checkModel);
-			_addDelegateByTag('select', 'change', _checkModel);
-		});
+	
+	(function initialize() {
+		document.write('<style type="text/css">.'+_hideClass+'{display:none!important;}</style>');
+		
+		_init();
+		
+		_addDelegateByTag('input', 'click', _checkModel);
+		_addDelegateByTag('input', 'change', _checkModel);
+		_addDelegateByTag('input', 'keyup', _checkModel);
+		_addDelegateByTag('textarea', 'change', _checkModel);
+		_addDelegateByTag('textarea', 'keyup', _checkModel);
+		_addDelegateByTag('select', 'change', _checkModel);
 	})();
 	
 	
 	return {
-		_dynamicNodes: _dynamicNodes,
-		_models: _models
+		_dynamicElements: _dynamicElements,
+		_models: _models,
+		_submittable: _submittableElements,
+		init: _init
 	};
 	
 })();
