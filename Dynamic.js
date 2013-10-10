@@ -8,6 +8,47 @@ window.Dynamic = (function() {
 	
 	
 	/**
+	 * Wrapper/polyfill for querySelectorAll
+	 * @see http://www.codecouch.com/2012/05/adding-document-queryselectorall-support-to-ie-7/
+	 * 
+	 * @param {String} selector
+	 * @param {HTMLElement} [node]
+	 * @return {NodeList|Array}
+	 */
+	var _qsa = function(selector1, node1) {
+		alert('test');
+		if (document.querySelectorAll) {
+			_qsa = function(selector, node) {
+				node = node || document;
+				return node.querySelectorAll(selector);
+			};
+		} else {
+			var style = document.createStyleSheet();
+
+			_qsa = function(selector, node) {
+				node = node || document;
+				var rs = [];
+				var selectors = selector.replace(/\[for\b/gi, '[htmlFor').split(',');
+				var all = (node === document) ? node.all : node.getElementsByTagName('*');
+
+				for (var iSel=selectors.length; iSel--;) {
+					style.addRule(selectors[iSel], 'foo:bar');
+					for (var iAll=all.length; iAll--;) {
+						if (all[iAll].currentStyle.foo) {
+							rs.push(all[iAll]);
+						}
+					}
+					style.removeRule(0);
+				}
+				return rs;
+			};
+		}
+
+		return _qsa(selector1, node1);
+	};
+	
+	
+	/**
 	* Determines whether a DOM element has the given className
 	* @see http://yuilibrary.com/yui/docs/api/files/dom_js_dom-class.js.html
 	* @param {Element} el The DOM element. 
@@ -62,31 +103,6 @@ window.Dynamic = (function() {
 		}
 	};
 	
-	
-	/**
-	 * Gets all elements with specified attribute
-	 * Doesn't support 'for' attribute in ie7
-	 * @private
-	 * @param {Element} el
-	 * @param {String} attr
-	 * @return {NodeList|Array} Matching nodes
-	 */
-	var _getElementsWithAttribute = function(el, attr) {
-		if (el.querySelectorAll) {
-			return el.querySelectorAll('[' + attr + ']');
-		} else {
-			var matchingNodes = [];
-			var allNodes = el.getElementsByTagName('*');
-			
-			for (var i=0, iLen=allNodes.length; i<iLen; i++) {
-				var thisNode = allNodes[i];
-				if (thisNode.getAttribute(attr) !== null) {
-					matchingNodes.push(thisNode);
-				}
-			}
-			return matchingNodes;
-		}
-	};
 	
 	/**
 	 * Add an event listener
@@ -301,22 +317,12 @@ window.Dynamic = (function() {
 		if (el.nodeName === 'INPUT' || el.nodeName === 'SELECT' || el.nodeName === 'TEXTAREA') {
 			_submittableElements.push(el);
 		} else {
-			
-			var inputs = _nodelistToArray(el.getElementsByTagName('input'));
-			var selects = _nodelistToArray(el.getElementsByTagName('select'));
-			var textareas = _nodelistToArray(el.getElementsByTagName('textarea'));
-			
-			_submittableElements = _submittableElements.concat(inputs).concat(selects).concat(textareas);
+			var childInputs = _qsa('input, select, textarea', el);
+			// .concat() doesn't work for NodeLists :(
+			for (var i=0, iLen=childInputs.length; i<iLen; i++) {
+				_submittableElements.push(childInputs[i]);
+			}
 		}
-	};
-	
-	
-	var _nodelistToArray = function (nodeList) {
-		var arr = [];
-		for (var i=0, iLen=nodeList.length; i<iLen; i++) {
-			arr.push(nodeList[i]);
-		}
-		return arr;
 	};
 	
 	
@@ -325,13 +331,14 @@ window.Dynamic = (function() {
 	 * @public
 	 */
 	var _init = function() {
-		var modelList = _getElementsWithAttribute(document, 'data-model');
+		var modelList = _qsa('[data-model]');
 		for (var i=0, iLen=modelList.length; i<iLen; i++) {
 			_initModel(modelList[i]);
 		}
 		
 		_dynamicElements = [];
-		var dynEls = _getElementsWithAttribute(document, 'data-show');
+		_submittableElements = [];
+		var dynEls = _qsa('[data-show]');
 		for (var i=0, iLen=dynEls.length; i<iLen; i++) {
 			var el = dynEls[i];
 			_dynamicElements.push(el);
