@@ -9,14 +9,13 @@ window.Dynamic = (function() {
 	
 	/**
 	 * Wrapper/polyfill for querySelectorAll
+	 * Needed for IE 7- only
 	 * @see http://www.codecouch.com/2012/05/adding-document-queryselectorall-support-to-ie-7/
-	 * 
 	 * @param {String} selector
 	 * @param {HTMLElement} [node]
 	 * @return {NodeList|Array}
 	 */
 	var _qsa = function(selector1, node1) {
-		alert('test');
 		if (document.querySelectorAll) {
 			_qsa = function(selector, node) {
 				node = node || document;
